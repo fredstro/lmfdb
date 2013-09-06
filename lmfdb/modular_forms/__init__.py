@@ -1,4 +1,9 @@
 # / modular_forms/__init__.py
+import sys
+sys.path.append('/home/fredrik/Programming/Projects/mfdb')
+sys.path.append('/home/fredrik/Programming/Projects/modforms-db')
+
+ 
 import lmfdb.base
 import lmfdb.utils
 import flask

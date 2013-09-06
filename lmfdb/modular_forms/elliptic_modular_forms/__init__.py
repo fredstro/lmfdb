@@ -1,4 +1,4 @@
-import lmfdb.utils
+import lmfdb.utils #import make_logger
 import flask
 
 ## Some common definitions to use in this module.
