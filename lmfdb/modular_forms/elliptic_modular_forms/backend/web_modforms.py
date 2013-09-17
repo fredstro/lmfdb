@@ -225,20 +225,48 @@ class WebModFormSpace_class(object):
     def _get_aps(self, prec=10):
         r"""
         Get aps from database they exist.
+        NOTE: They are currently in two types of formats.
         """
         ap_files = self.db_collection('ap.files')
         key = {'k': int(self._k), 'N': int(self._N), 'chi': int(self._chi)}
         key['prec'] = {"$gt": int(prec - 1)}
-        ap_from_db  = ap_files.find(key).sort("prec")
-        emf_logger.debug("Try to find aps with key:{0}. \n Found: {0}".format(key,ap_from_db))
-        emf_logger.debug("finds.count()={0}".format(ap_from_db.count()))
+        newforms = ap_files.find(key).distinct('newform').sort()
+        #emf_logger.debug("Try to find aps with key:{0}. \n Found: {0}".format(key,ap_from_db))
+        #emf_logger.debug("finds.count()={0}".format(ap_from_db.count()))
         fs = self.gridfs_collection('ap')
         res = []
-        for rec in ap_from_db:
+        if newforms <> []:
+            emf_logger.debug("Newforms in db:{0}".format(newforms))
+            if len(newforms)<> self.num_factors():
+                emf_logger.critical("Did not have coefficients for all factors!")
+            for d in newforms:
+                key['newform']=int(d)
+                rec = ap_files.find_one(key).sort("prec") 
+                emf_logger.debug("rec={0}".format(rec))
+                aps =  loads(fs.get(rec['_id']).read())
+                try:
+                    E,v = aps
+                    res.append(E*v)
+                except Exception as e:
+                    emf_logger.debug("Could not load aps. Error:".format(e.message))
+        else:
+            rec = ap_files.find(key).sort("prec").find_one()
+            #rec = ap_from_db.find_one(key).sort("prec") 
             emf_logger.debug("rec={0}".format(rec))
             aps =  loads(fs.get(rec['_id']).read())
-            res.append(aps)
+            if isinstance(aps,list):
+                try:
+                    for E,v in aps:
+                        res.append(E*v)
+                    break
+                except Exception as e:
+                    emf_logger.debug("Could not load aps. Error:".format(e.message))
+            else:
+                emf_logger.debug("Unknown format for ap's")
         return res
+
+        #def _read_aps_v0(self,aps):
+        
         #aps = self._modular_symbols.ambient(
         #    ).compact_newform_eigenvalues(prime_range(prec), names='x')
         # Insert in db
