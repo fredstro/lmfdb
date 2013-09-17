@@ -210,7 +210,7 @@ class WebModFormSpace_class(object):
         """
         D = connect_to_modularforms_db()
         if collection not in D.collection_names():
-            emf_logger.critical("Collection {0} is not in database {1} at connection {2}".format(collection,db_name,C))
+            emf_logger.critical("Collection {0} is not in database {1} at connection {2}".format(collection,db_name,D))
         return D[collection]
 
     def gridfs_collection(self,collection):
@@ -230,14 +230,15 @@ class WebModFormSpace_class(object):
         key = {'k': int(self._k), 'N': int(self._N), 'chi': int(self._chi)}
         key['prec'] = {"$gt": int(prec - 1)}
         ap_from_db  = ap_files.find(key).sort("prec")
-        emf_logger.debug("finds={0}".format(ap_from_db))
+        emf_logger.debug("Try to find aps with key:{0}. \n Found: {0}".format(key,ap_from_db))
         emf_logger.debug("finds.count()={0}".format(ap_from_db.count()))
         fs = self.gridfs_collection('ap')
-        if ap_from_db.count()>0:
-            rec = ap_from_db.next()
+        res = []
+        for rec in ap_from_db:
             emf_logger.debug("rec={0}".format(rec))
-            return loads(fs.get(rec['_id']).read())
-        return []
+            aps =  loads(fs.get(rec['_id']).read())
+            res.append(aps)
+        return res
         #aps = self._modular_symbols.ambient(
         #    ).compact_newform_eigenvalues(prime_range(prec), names='x')
         # Insert in db
@@ -1267,7 +1268,7 @@ class WebNewForm_class(object):
         """
         emf_logger.debug("computing embeddings of q-expansions : has {0} embedded coeffs. Want : {1} ".format(len(self._embeddings),prec))
       
-        if(len(self._embeddings) > prec):
+        if len(self._embeddings) > prec:
             bp = self._embeddings[0][0].prec()
             emf_logger.debug("have precision: {0} and want: {1}".format(bp,bitprec))
             if bp >= bitprec:
@@ -1372,14 +1373,16 @@ class WebNewForm_class(object):
             return 
         if len(self.parent()._ap) > self._fi:
             ambient_aps = self.parent()._ap[self._fi]
-        emf_logger.debug("ambient aps:{0}".format(ambient_aps))
+            emf_logger.debug("ambient aps:{0}".format(ambient_aps))
+        else:
+            emf_logger.debug("ambient aps:{0}".format(self.parent()._ap))
         try:
-            E, v = ambient_aps
-            if len(aps) < E.rows(): # We have more to update with
-                c = E*v
-                lc = len(c)
-                for i in range(len(c)):
-                    p = primes_first_n(lc)[i]
+            c = self.parent()._ap[self._fi]
+            lc = len(c)
+            if len(aps) < lc:
+                ps =  primes_first_n(lc)
+                for i in range(lc):
+                    p = ps[i]
                     aps[p] = c[i]
                 emf_logger.debug("after update self_ap={0}".format(self._ap))
                 if insert_in_db:
@@ -1389,7 +1392,7 @@ class WebNewForm_class(object):
             pass
 
         
-    def coefficient_n_recursive(self,n):
+    def coefficient_n_recursive(self,n,insert_in_db=False):
         r"""
         Reimplement the recursive algorithm in sage modular/hecke/module.py
         We do this because of a bug in sage with .eigenvalue()
@@ -1425,7 +1428,7 @@ class WebNewForm_class(object):
                 prod = ev[pow]
             else:
                 prod *= ev[pow]
-        if recompute and insert_in_db:
+        if insert_in_db:
             self.insert_in_db()
             
 
