@@ -39,7 +39,7 @@ class LfunctionTest(LmfdbTest):
         assert 'Graph' in L.data
 
     def test_Lhmf(self):
-        L = self.tc.get('/L/ModularForm/GL2/2.2.5.1/holomorphic/2.2.5.1-36.1-a/0/0/')
+        L = self.tc.get('/L/ModularForm/GL2/TotallyReal/2.2.5.1/holomorphic/2.2.5.1-36.1-a/0/0/')
         assert 'Graph' in L.data
 
     def test_Lgl3maass(self):
@@ -135,7 +135,7 @@ class LfunctionTest(LmfdbTest):
         assert 'Elliptic' in L.data
 
     def test_Lhgm(self):
-        L = self.tc.get('/L/Motives/Hypergeometric/Q/A2.2.2.2_B1.1.1.1_t1.2/')			# To be moved eventually
+        L = self.tc.get('/L/Motive/Hypergeometric/Q/A2_B1/t-2.3')			# To be moved eventually
         assert 'Graph' in L.data
 
 

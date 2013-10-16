@@ -46,7 +46,7 @@ def l_function_dirichlet_browse_page():
 # Degree 2 L-functions browsing page ##############################################
 @l_function_page.route("/degree2/")
 def l_function_degree2_browse_page():
-    info = {"bread": get_bread(1, [])}
+    info = {"bread": get_bread(2, [])}
 #    info["minModDefault"] = 1
 #    info["maxModDefault"] = 20
 #    info["maxOrder"] = 19
@@ -244,21 +244,21 @@ def l_function_emf_redirect_3(level, weight):
 
 
 # L-function of Hilbert modular form ###########################################
-@l_function_page.route("/ModularForm/GL2/<field>/holomorphic/<label>/<character>/<number>/")
+@l_function_page.route("/ModularForm/GL2/TotallyReal/<field>/holomorphic/<label>/<character>/<number>/")
 def l_function_hmf_page(field, label, character, number):
     args = {'field': field, 'label': label, 'character': character,
             'number': number}
     return render_single_Lfunction(Lfunction_HMF, args, request)
 
 
-@l_function_page.route("/ModularForm/GL2/<field>/holomorphic/<label>/<character>/")
+@l_function_page.route("/ModularForm/GL2/TotallyReal/<field>/holomorphic/<label>/<character>/")
 def l_function_hmf_redirect_1(field, label, character):
     logger.debug(field, label, character)
     return flask.redirect(url_for('.l_function_hmf_page', field=field, label=label,
                                   character=character, number='0'), code=301)
 
 
-@l_function_page.route("/ModularForm/GL2/<field>/holomorphic/<label>/")
+@l_function_page.route("/ModularForm/GL2/TotallyReal/<field>/holomorphic/<label>/")
 def l_function_hmf_redirect_2(field, label):
     logger.debug(field, label)
     return flask.redirect(url_for('.l_function_hmf_page', field=field, label=label,
@@ -304,9 +304,9 @@ def l_function_artin_page(dimension, conductor, tim_index):
     return render_single_Lfunction(ArtinLfunction, args, request)
 
 # L-function of hypergeometric motive   ########################################
-@l_function_page.route("/Motives/Hypergeometric/Q/<label>/")
-def l_function_hgm_page(label):
-    args = {'label': label}
+@l_function_page.route("/Motive/Hypergeometric/Q/<label>/<t>")
+def l_function_hgm_page(label,t):
+    args = {'label': label+'_'+t}
     return render_single_Lfunction(HypergeometricMotiveLfunction, args, request)
 
 
@@ -504,12 +504,12 @@ def initLfunction(L, args, request):
         if L.ellipticcurve:
             info['friends'].append(
                 ('EC isogeny class ' + L.ellipticcurve,
-                 url_for("by_ec_label", label=L.ellipticcurve)))
+                 url_for("ec.by_ec_label", label=L.ellipticcurve)))
             info['friends'].append(('L-function ' + str(L.level) + '.' + str(L.label),
                                     url_for('.l_function_ec_page', label=L.ellipticcurve)))
             for i in range(1, L.nr_of_curves_in_class + 1):
                 info['friends'].append(('Elliptic curve ' + L.ellipticcurve + str(i),
-                                       url_for("by_ec_label", label=L.ellipticcurve + str(i))))
+                                       url_for("ec.by_ec_label", label=L.ellipticcurve + str(i))))
             info['friends'].append(
                 ('Symmetric square L-function',
                  url_for(".l_function_ec_sym_page", power='2',
@@ -572,9 +572,10 @@ def initLfunction(L, args, request):
                 info['friends'].append(('Symmetric %s' % ordinal(j), friendlink3))
 
     elif L.Ltype() == 'siegelnonlift' or L.Ltype() == 'siegeleisenstein' or L.Ltype() == 'siegelklingeneisenstein' or L.Ltype() == 'siegelmaasslift':
+        friendlink = friendlink.rpartition('/')[0] #strip off embedding number for L-function
         weight = str(L.weight)
         number = str(L.number)
-        info['friends'] = [('Siegel Modular Form', friendlink)]
+        info['friends'] = [('Siegel Modular Form ' + weight + '_' + L.orbit, friendlink)]
 
     elif L.Ltype() == "artin":
         # info['zeroeslink'] = ''
@@ -585,7 +586,11 @@ def initLfunction(L, args, request):
             info['plotlink'] = ''
 
     elif L.Ltype() == "hgmQ":
-        info['friends'] = [('Hypergeometric motive ', friendlink.replace("_t","/t"))]   # The /L/ trick breaks down for motives, because we have a scheme for the L-functions themselves
+        # undo the splitting above
+        newlink = friendlink.rpartition('t')
+        friendlink = newlink[0]+'/t'+newlink[2]
+        #info['friends'] = [('Hypergeometric motive ', friendlink.replace("t","/t"))]   # The /L/ trick breaks down for motives, because we have a scheme for the L-functions themselves
+        info['friends'] = [('Hypergeometric motive ', friendlink)]   # The /L/ trick breaks down for motives, because we have a scheme for the L-functions themselves
 
 
     info['dirichlet'] = lfuncDStex(L, "analytic")
@@ -969,15 +974,17 @@ def processMaassNavigation(numrecs=35):
     Produces a table of numrecs Maassforms with Fourier coefficients in the database
     """
     DB = LfunctionDatabase.getMaassDb()
-    s = '<h5>The L-functions attached to the first 5 eigenvalues of weight 0 Maass forms on Hecke congruence groups $\Gamma_0(N)$ with trivial character</h5>'
+    s = '<h5>The L-functions attached to the first 4 weight 0 Maass newforms with trivial character on Hecke congruence groups $\Gamma_0(N)$</h5>'
     s += '<table>\n'
     i = 0
-    maxinlevel = 5
-    for level in [1, 2, 3, 4, 5, 6, 7]:
+    maxinlevel = 4
+    for level in [1, 2, 3, 4, 5, 6, 7, 9]:
         j = 0
         s += '<tr>\n'
         s += '<td><bold>N={0}:</bold></td>\n'.format(level)
-        finds = DB.get_Maass_forms({'Level': int(level), 'Character': int(0)})
+        finds = DB.get_Maass_forms({'Level': int(level),
+                                    'char': 1,
+                                    'Newform' : None})
         for f in finds:
             nc = f.get('Numc', 0)
             if nc <= 0:
