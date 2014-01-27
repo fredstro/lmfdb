@@ -1,5 +1,6 @@
 import lmfdb.utils
 import flask
+from flask.ext.cache import Cache
 
 ## Some common definitions to use in this module.
 
@@ -11,6 +12,10 @@ EMF_TOP = "Holomorphic Modular Forms"  # The name to use for the top of this cat
 EMF = "emf"  # The current blueprint name
 emf = flask.Blueprint(EMF, __name__, template_folder="views/templates", static_folder="views/static")
 emf_logger = lmfdb.utils.make_logger(emf)
+
+from lmfdb.base import app
+cache = Cache(app)
+cache.init_app(app, config={'CACHE_TYPE':'memcached'}) #FileSystemCache'})
 ### Maximum values for computations
 N_max_comp = 50
 k_max_comp = 12
