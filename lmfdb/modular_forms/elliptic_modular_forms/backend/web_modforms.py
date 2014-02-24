@@ -1,5 +1,4 @@
-
-# -*- coding: utf-8 -*-
+#-*- coding: utf-8 -*-
 #*****************************************************************************
 #  Copyright (C) 2010 Fredrik Strömberg <fredrik314@gmail.com>,
 #
@@ -231,11 +230,12 @@ class WebModFormSpace_class(object):
         key = {'k': int(self._k), 'N': int(self._N), 'chi': int(self._chi)}
         key['prec'] = {"$gt": int(prec - 1)}
         newforms = ap_files.find(key).distinct('newform').sort()
+        ### TODO: Fix database records to new format.....
         #emf_logger.debug("Try to find aps with key:{0}. \n Found: {0}".format(key,ap_from_db))
         #emf_logger.debug("finds.count()={0}".format(ap_from_db.count()))
         fs = self.gridfs_collection('ap')
         res = []
-        if newforms <> []:
+        if newforms <> [] and newforms<>None:
             emf_logger.debug("Newforms in db:{0}".format(newforms))
             if len(newforms)<> self.num_factors():
                 emf_logger.critical("Did not have coefficients for all factors!")
@@ -250,7 +250,7 @@ class WebModFormSpace_class(object):
                 except Exception as e:
                     emf_logger.debug("Could not load aps. Error:".format(e.message))
         else:
-            rec = ap_files.find(key).sort("prec").find_one()
+            rec = ap_files.find(key).sort("prec").next()
             #rec = ap_from_db.find_one(key).sort("prec") 
             emf_logger.debug("rec={0}".format(rec))
             aps =  loads(fs.get(rec['_id']).read())
@@ -258,7 +258,7 @@ class WebModFormSpace_class(object):
                 try:
                     for E,v in aps:
                         res.append(E*v)
-                    break
+                    #break
                 except Exception as e:
                     emf_logger.debug("Could not load aps. Error:".format(e.message))
             else:
@@ -473,7 +473,7 @@ class WebModFormSpace_class(object):
             decomp = self._get_newform_factors()
             if len(decomp)>0:
                 L = filter(lambda x: x.is_new() and x.is_cuspidal(), decomp)
-                emf_logger.debug("computed L:".format(L))
+                emf_logger.debug("computed L:{0}".format(L))
             elif self._computation_too_hard():
                 L = []
                 raise IndexError,"No decomposition was found in the database!"
