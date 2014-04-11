@@ -1,0 +1,43 @@
+{% extends "homepage.html" %}
+
+{% block content %}
+
+{% if info.error is defined %}
+
+<h1>There was an error in meeting your previous request. Please change parameters.</h1>
+
+<div> 
+<h2> Error message: </h2>
+{{ info.error | safe }}
+</div>
+{% endif %}
+
+<div>
+The modular group, \(PSL(2,Z)\) is the group consisting of mappings \(z\mapsto (az+b)/(cz+d) \)
+with a,b,c,d integers and ad-bc=1. These mappings are usually represented by matrices and we have
+\(PSL(2,Z) \simeq SL(2,Z)/{\pm 1} \)
+
+<p>
+Below you can browse subgroups of the modular group which are currently in the LMFDB.
+</div>
+
+{% if info.data is defined %}
+<table>
+<tr>
+<th>
+</th>
+</tr>
+{% for r in info.data %}
+<tr>
+<td>{{ r.p2 }}</td>
+<td>{{ r.p3 }}</td>
+<td>{{ r.signature_as_string() }}</td>
+<td>{{ r.is_congruence }}</td>
+<td>{{ r.is_symmetric }}</td>
+
+
+</tr>
+{% endfor %}
+</table>
+{% endif %}
+{% endblock content %}

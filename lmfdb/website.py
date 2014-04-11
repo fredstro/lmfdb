@@ -39,7 +39,7 @@ import hypergm
 import motives
 import riemann
 import logging
-
+import psl2z_subgroups
 import raw
 from modular_forms.maass_forms.picard import mwfp
 
