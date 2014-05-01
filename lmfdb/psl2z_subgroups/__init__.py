@@ -23,4 +23,4 @@ db = SQLAlchemy(app)
 import views
 import backend
 from views import browse_subgroups, navigate_groups
-app.register_blueprint(psg, url_prefix="/Subgroups/")
+app.register_blueprint(psg, url_prefix="/Subgroups")

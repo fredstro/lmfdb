@@ -101,7 +101,7 @@ def render_elliptic_modular_forms(level=0, weight=0, character=None, label='', *
         args = extract_data_from_jump_to(s)
         emf_logger.debug("args=%s" % args)
         return redirect(url_for("emf.render_elliptic_modular_forms", **args), code=301)
-        # return render_elliptic_modular_forms(**args)
+    # return render_elliptic_modular_forms(**args)
     if level > 0 and weight > 0 and character > -1 and label != '':
         emf_logger.debug("info=%s" % info)
         return render_one_elliptic_modular_form(**info)
@@ -112,7 +112,7 @@ def render_elliptic_modular_forms(level=0, weight=0, character=None, label='', *
     if (level > 0 and weight == 0) or (weight > 0 and level == 0):
         emf_logger.debug("Have level or weight only!")
         return browse_elliptic_modular_forms(**info)
-        # return render_elliptic_modular_form_navigation_wp(**info)
+    # return render_elliptic_modular_form_navigation_wp(**info)
     # Otherwise we go to the main navigation page
     return render_elliptic_modular_form_navigation_wp(**info)
 
@@ -242,13 +242,13 @@ def get_downloads(level=None, weight=None, character=None, label=None, **kwds):
     if info['download'] == 'object':
         return download_web_modform(info)
 
-        info['error'] = "Could not find  file! "
-        # if label<>'':
-        #    # download a function
-        #    render_one_elliptic_modular_form_wp(info)
-        # else:
-        #    render_one_elliptic_modular_form_space_wp(info)
-        #    # download a space
+    info['error'] = "Could not find  file! "
+    # if label<>'':
+    #    # download a function
+    #    render_one_elliptic_modular_form_wp(info)
+    # else:
+    #    render_one_elliptic_modular_form_space_wp(info)
+    #    # download a space
 
 
 @emf.route("/Plots/<int:grouptype>/<int:level>/")
@@ -426,15 +426,15 @@ def make_table_of_dimensions(level_start=1, level_stop=50, weight_start=1, weigh
             # tbl['data'][r][k]=s
             # print "row=",row
             # tbl['data'][r]=row
-    # print "tbl=",tbl
+            # print "tbl=",tbl
     s = html_table(tbl)
     # s=s+"\n <br> \(N="+str(rowlen0)+"\cdot row+col\)"
     # print "SS=",s
     return s
-    # ss=re.sub('texttt','',s)
-    # info['popup_table']=ss
-        # info['sidebar']=set_sidebar([navigation,parents,siblings,friends,lifts])
-        #   return info
+# ss=re.sub('texttt','',s)
+# info['popup_table']=ss
+# info['sidebar']=set_sidebar([navigation,parents,siblings,friends,lifts])
+#   return info
 
 
 def set_table(info, is_set, make_link=True):  # level_min,level_max,weight=2,chi=0,make_link=True):
@@ -561,7 +561,7 @@ def set_table(info, is_set, make_link=True):  # level_min,level_max,weight=2,chi
                     # s=s+"\( \chi_{"+str(chi)+"}\) :"+str(d)
 
                     # print N,k,chi,d
-                # print s
+                    # print s
                 else:
                     s = "All spaces are zero-dimensional!"
                 row.append(s)
@@ -584,7 +584,7 @@ def print_list_of_coefficients(info):
     level = my_get(info, 'level', -1, int)
     weight = my_get(info, 'weight', -1, int)
     prec = my_get(info, 'prec', 12, int)  # number of digits
-    bitprec = my_get(info, 'bitprec', 12, int)  # number of digits                
+    bitprec = my_get(info, 'bitprec', 12, int)  # number of digits
     character = my_get(info, 'character', '', str)  # int(info.get('weight',0))
     if character == '':
         character = 0
@@ -625,7 +625,7 @@ def print_list_of_coefficients(info):
 
 def print_coefficients_for_one_form(F, number, fmt,bitprec=53):
     emf_logger.debug("in print {2} coefs for 1 form: format={0} bitprec={1}".format(fmt,bitprec,number))
-    # Start with some meta-data 
+    # Start with some meta-data
     s = "## level={N}, weight={k}, character={ch},label={label} \n".format(N=F.level(),k=F.weight(),ch=F.chi(),label=F.label())
     max_cn = F.max_cn()
     if number > max_cn:
@@ -654,13 +654,13 @@ def print_coefficients_for_one_form(F, number, fmt,bitprec=53):
     return s
 
 
-    # fn = tempfile.mktemp(suffix=".png")#
-    # fd.save(filename = fn)
-    # data = file(fn).read()
-    # os.remove(fn)
-    # response = make_response(data)
-    # response.headers['Content-type'] = 'image/png'
-    # return response
+# fn = tempfile.mktemp(suffix=".png")#
+# fd.save(filename = fn)
+# data = file(fn).read()
+# os.remove(fn)
+# response = make_response(data)
+# response.headers['Content-type'] = 'image/png'
+# return response
 
 
 def set_info_for_navigation(info, is_set, sbar):

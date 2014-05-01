@@ -5,7 +5,7 @@ from modular_forms.elliptic_modular_forms.backend.plot_dom import *
 from lmfdb.website import dbport
 C = pymongo.connection.Connection(port=dbport)
 C = pymongo.connection.Connection(port=dbport)
-
+from bson.binary import Binary
 
 @parallel
 def generate_fundom_plots(N, group='Gamma0'):
@@ -21,5 +21,5 @@ def generate_fundom_plots(N, group='Gamma0'):
     save(dom, filename)
     data = open(filename).read()
     idins = gps.insert({'level': int(N), 'index': int(G.index(
-    )), 'G': pymongo.binary.Binary(dumps(G)), 'domain': pymongo.binary.Binary(data), 'type': grouptype})
+    )), 'G': Binary(dumps(G)), 'domain': Binary(data), 'type': grouptype})
     print "inserted: ", N, " ", idins

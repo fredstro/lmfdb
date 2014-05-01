@@ -21,23 +21,71 @@ with a,b,c,d integers and ad-bc=1. These mappings are usually represented by mat
 Below you can browse subgroups of the modular group which are currently in the LMFDB.
 </div>
 
+
+{% if info.signatures is defined %}
+
+{% if info.signatures.count() == 0 %}
+
+{% if info.is_consistent == 1 %}
+
+The datbase does not contain any groups with this signature. 
+
+{% else %}
+
+There does not exist any subgroups with the given signature specification: {{ info.data.signature }}.
+
+{% endif %}
+
+{% else %}
+
+<table>
+  <tr>
+    <th>Signature</th>
+    <th>Representative </th>
+    <th>(Standard name if existing)</th>
+    <th>Number of conjugates </th>
+    <th>Is symmetric </th>
+    <th>Is congruence </th>
+    <th>Cusps</th>
+
+  </tr>
+  {% for s in info.signatures %}
+  <tr><td>{{ s }} </td><td></td> </tr>
+     {% for cc in s.conjugacy_classes_mod_psl %}
+  <tr><td></td>
+    {% set G = cc.representative %}
+    <td>{{ G.p3 }}</td>
+    <td>
+    {% for g in cc.psl_conjugates| get_named %}
+    <a href="{{ url_for('psl2zsubg.show_one_group',index=g.psl2z_index,nu=g.nu,e2=g.e2,e3=g.e3,genus=g.genus,gid=g.id) }}">
+       \({{ g.latex_name }} \)
+       </a>
+    {% endfor %}
+    </td>
+    <td>{{ cc.length() }}</td>
+    <td>{{ G.is_symmetric }} </td>
+    <td>{{ G.is_congruence }} </td>
+    <td>
+{% for c in G._cusps %}
+{{ c.a }}/{{ c.b }}
+{% endfor%}    
+</td>
+  </tr>
+     {% endfor %} 
+  {% endfor %} 
+
+
+</table>
+{% endif %}
+{% endif %}
+
 {% if info.data is defined %}
 <table>
 <tr>
 <th>
 </th>
 </tr>
-{% for r in info.data %}
-<tr>
-<td>{{ r.p2 }}</td>
-<td>{{ r.p3 }}</td>
-<td>{{ r.signature_as_string() }}</td>
-<td>{{ r.is_congruence }}</td>
-<td>{{ r.is_symmetric }}</td>
 
-
-</tr>
-{% endfor %}
 </table>
 {% endif %}
 {% endblock content %}

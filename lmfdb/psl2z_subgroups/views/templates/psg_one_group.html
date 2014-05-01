@@ -1,0 +1,56 @@
+{% extends "homepage.html" %}
+
+{% block content %}
+
+{% if info.error is defined or info.g is not defined %}
+{% if info.index == 1 or info.index == 2%}
+{% set w="217" %} {%set h="320"%}
+{% else %}
+  {% set w="384" %} {%set h="320"%}
+{%endif%}
+<h1>There was an error in meeting your previous request. Please change parameters.</h1>
+
+<div> 
+<h2> Error message: </h2>
+{{ info.error | safe }}
+</div>
+
+{% else %}
+{% set g = info.g %}
+<h1>This page displays information about the following subgroup of the modular group</h1>
+<table>
+  {% if g.latex_name | length > 0 %}
+    <tr><td> Name : \( {{g.latex_name}} \)</td>
+    </tr>
+  {% endif %}
+  <tr><td> \( \sigma_S \) </td> <td>{{g.p2}}</td></tr>
+  <tr><td> \( \sigma_R \) </td> <td>{{g.p3}}</td></tr>
+  <tr>    
+    <td>Index: {{ g.psl2z_index }}
+    </td>
+  </tr>
+  <tr><td>Is symmetric : {{ g.is_symmetric }} </td></tr>
+  <tr><td>Is congruence: {{g.is_congruence }}  </td></tr>
+  <tr><td>Cusps</td><td>Cusp width </td></tr>
+{% for c in g._cusps %}
+  <tr><td>{{ c.a }}/{{ c.b }}</td><td>{{c.width}}</td></tr>
+{% endfor%}    
+</table>
+{% if g.has_modular_correspondence %}
+  <h2> Modular correspondences </h2>
+  <table>
+  {% for m in g._modular_correspondences %}
+  <tr><td>
+  {{m.desc }} given by the matrix \( {{ m | latex }} \)
+  </td></tr>
+  {% endfor %}
+  </table>
+  {% endif %}
+  {% if fd_plot_url is defined %}
+  <div id="fundom">
+    <img id="plot" width="{{w}}" height="{{h}}" src="{{fd_plot_url | safe}}" />
+  </div>
+     {% endif %}
+
+{% endif %}
+{% endblock %}
