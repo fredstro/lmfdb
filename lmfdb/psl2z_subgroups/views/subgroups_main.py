@@ -70,6 +70,10 @@ def browse_subgroups(**kwds):
     info = {}
     info['data'] = {'signature':signature}
     info['signatures'] = build_signature_query(signature)
+    info['indices'] = [x.psl2z_index for x in info['signatures']]
+    info['show_classes']=False
+    #print "signatures=",info['signatures'].all()
+    #print "count=",info['signatures'].count()
     if info['signatures'].count()==0:
         ## Let's check if the signature is at all consistent.
         info['is_consistent'] = is_consistent_signature(signature)

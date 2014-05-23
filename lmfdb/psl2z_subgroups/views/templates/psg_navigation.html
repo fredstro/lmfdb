@@ -41,43 +41,51 @@ There does not exist any subgroups with the given signature specification: {{ in
 <table>
   <tr>
     <th>Signature</th>
+    <th>No. conjugacy classes </th>
     <th>Representative </th>
     <th>(Standard name if existing)</th>
     <th>Number of conjugates </th>
     <th>Is symmetric </th>
     <th>Is congruence </th>
     <th>Cusps</th>
-
   </tr>
+{% for N in info.indices %}
+  <tr><th>{{ N }} </th><td></td><td></td> </tr>
   {% for s in info.signatures %}
-  <tr><td>{{ s }} </td><td></td> </tr>
+  <tr><td>{{ s }} </td><td> {{ s.conjugacy_classes_mod_psl | length }}</td><td></td> </tr>
+     
      {% for cc in s.conjugacy_classes_mod_psl %}
-  <tr><td></td>
-    {% set G = cc.representative %}
-    <td>{{ G.p3 }}</td>
-    <td>
-    {% for g in cc.psl_conjugates| get_named %}
-    <a href="{{ url_for('psl2zsubg.show_one_group',index=g.psl2z_index,nu=g.nu,e2=g.e2,e3=g.e3,genus=g.genus,gid=g.id) }}">
-       \({{ g.latex_name }} \)
-       </a>
-    {% endfor %}
-    </td>
-    <td>{{ cc.length() }}</td>
-    <td>{{ G.is_symmetric }} </td>
-    <td>{{ G.is_congruence }} </td>
-    <td>
-{% for c in G._cusps %}
-{{ c.a }}/{{ c.b }}
-{% endfor%}    
-</td>
-  </tr>
-     {% endfor %} 
-  {% endfor %} 
+     <tr>
+       <td></td><td></td>
+      {% set G = cc.representative %}
+      <td>{{ G.p3 }}</td>
+      <td>
+      {% for g in cc.psl_conjugates| get_named %}
+        <a href="{{ url_for('psl2zsubg.show_one_group',index=g.psl2z_index,nu=g.nu,e2=g.e2,e3=g.e3,genus=g.genus,gid=g.id) }}">
+        \({{ g.latex_name }} \)
+        </a>
+      {% endfor %}
+      </td>
+      <td>{{ cc.length() }}</td>
+      <td>{{ G.is_symmetric }} </td>
+      <td>{{ G.is_congruence }} </td>
+      <td>
+      {% for c in G._cusps %}
+        {{ c.a }}/{{ c.b }}
+      {% endfor%}    
+      </td>
+     </tr>
+    {% endfor %} 
+{% endfor %} 
+{% endfor %} 
 
 
 </table>
 {% endif %}
+
 {% endif %}
+
+
 
 {% if info.data is defined %}
 <table>
