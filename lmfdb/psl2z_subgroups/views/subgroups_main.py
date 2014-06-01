@@ -134,3 +134,15 @@ def render_plot(**kwds):
     response = make_response(data)
     response.headers['Content-type'] = 'image/png'
     return response
+
+@psg.route("/Tables/",methods=met)
+def render_browse_table(**kwds):
+    info['colhheads']=['Index',
+                       'Signature',
+                       'No. cc.',
+                       'Repr',
+                       'Symmetry',
+                       'Congruence'
+                       ]
+return render_template("mwf_browse_all_eigenvalues.html", **info)
+    
