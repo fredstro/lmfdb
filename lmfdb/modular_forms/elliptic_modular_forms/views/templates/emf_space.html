@@ -1,24 +1,20 @@
 {% extends 'homepage.html' %}
 
-{% set got_a_relative_nf = 0 %}
+{% if character is not defined or character.order() == 1 %}
+  {% set new_name = "\( S_{%s}^{\mathrm{new}}(%s) \)"|format(weight, level) %}
+  {% set old_name = "\( S_{%s}^{\mathrm{old}}(%s) \)"|format(weight, level) %}
+{% else %}
+  {% set new_name = "\( S_{%s}^{\mathrm{new}}(%s) \)"|format(weight, character.latex_name()) %}
+  {% set old_name = "\( S_{%s}^{\mathrm{old}}(%s) \)"|format(weight, character.latex_name()) %}
+{% endif %}
 
 {% block content %}
 
-<h1>Newforms of weight {{ weight }} for {{ group }}
-{% if character is defined and character>0 %} 
-with character
-<a href='{{character_url}}'> 
-{{conrey_character_name}}
-</a>
-{% else %} 
-   with trivial character.
-{% endif %}
 {% if is_empty is not defined %}
 
 {% if extra_info is defined %}
 <span style="font-size:50%">({{ extra_info |safe }})</span>
 {% endif %}
-</h1>
 
 {% if error is defined %}
 {{ error |safe }}
@@ -28,43 +24,41 @@ with character
 
 {% if nontrivial_new %}
 <h2>
-  Decomposition of {{name_new}} into galois orbits
+  Decomposition of {{name_new}} into {{ KNOWL('mf.elliptic.hecke-orbits',title='irreducible Hecke orbits')}}
 </h2>
 <table>
   <thead>
     <tr>
-      <th>Form</th>
-      <th>Dim.</th>
-      <th>Defining polynomial</th>
-      <th>Discriminant</th>
-      <th align="left">\(q\)-expansion of eigenform</th>
+      <th>{{ KNOWL('mf.elliptic.label',title='Label')}}</th>
+      <th>{{ KNOWL('mf.elliptic.hecke-orbit-dimension',title='Dimension')}}</th>
+      <th>{{ KNOWL('mf.elliptic.coefficient_field',title='Field')}}</th>
+      <th align="left">{{ KNOWL('mf.elliptic.q-expansion-of-eigenform',title='$q$-expansion of eigenform')}}</th>
     </tr>
   </thead>
   <tbody>
-    {% for form in galois_orbits %}
+    {% for form in newforms.values() %}
     <tr>
-      <td><a href="{{form.url}}">{{form.full_label}}</a></td>
-      <td>{{ form.dim }}</td>
-      <td>{{ form.poly }}</td>
-      <td>{{ form.disc }}
-        {% if form.is_relative %}
-        {% set got_a_relative_nf = 1 %}
-        \( {}^{*} \)
-        {% endif %}
-      </td>
-      <td>{{ form.qexp }}</td>
+      <td><a href="{{form.url() }}">{{form.name()}}</a></td>
+      <td>{{ form.dimension() }}</td>
+      <td><a href="{{ form.coefficient_field_url() }}">{{ form.coefficient_field_label() }}</a></td>
+      <td>{{ form.q_expansion_latex() }}</td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
-{% if got_a_relative_nf == 1 %}
-\( {}^{*} \) denotes a relative discriminant.
+
+{% if character.order() > 2%}
+{% set n=character.modulus_euler_phi() %}
+{% set m=character.embedding() %}
+  Here, $\zeta_{{n}} = \mathrm{exp}(2 \pi i {{m}}/n)$.
 {% endif %}
- {% else %}
+
+{% else %}
 {{ name_new }} {{ nontrivial_new_info }}
 {% endif %}
+
 {% if old_decomposition != "" %}
-<h2> Decomposition of {{name_old}} into lower level spaces</h2>
+<h2> Decomposition of {{name_old}} into {{ KNOWL('mf.elliptic.oldspace',title='lower level spaces')}}</h2>
 {{ old_decomposition | safe }}
 {% endif %}
 	

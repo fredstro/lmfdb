@@ -24,10 +24,11 @@ import tempfile
 import os
 import re
 from lmfdb.utils import ajax_more, ajax_result, make_logger, to_dict, url_character
-from sage.all import *
+from sage.all import uniq
 from sage.modular.dirichlet import DirichletGroup
 from lmfdb.base import app, db
-from lmfdb.modular_forms.elliptic_modular_forms.backend.web_modforms import WebModFormSpace, WebNewForm,connect_to_modularforms_db
+from lmfdb.modular_forms.elliptic_modular_forms.backend.web_modforms import WebNewForm,connect_to_modularforms_db
+from lmfdb.modular_forms.elliptic_modular_forms.backend.web_modform_space import WebModFormSpace
 from lmfdb.modular_forms.elliptic_modular_forms.backend.emf_classes import ClassicalMFDisplay, DimensionTable
 from lmfdb.modular_forms import MF_TOP
 from lmfdb.modular_forms.elliptic_modular_forms import N_max_comp, k_max_comp, N_max_db, k_max_db
@@ -37,7 +38,6 @@ from lmfdb.modular_forms.elliptic_modular_forms.backend.emf_utils import *
 from lmfdb.modular_forms.elliptic_modular_forms.backend.plot_dom import *
 from lmfdb.modular_forms.elliptic_modular_forms import EMF, emf_logger, emf, EMF_TOP
 ###
-##use_db = True  # Should be decided intelligently
 ###
 
 
@@ -52,16 +52,6 @@ def render_elliptic_modular_form_space(level=None, weight=None, character=None, 
     info['level'] = level
     info['weight'] = weight
     info['character'] = character
-    # if kwds.has_key('character') and kwds['character']=='*':
-    #    return render_elliptic_modular_form_space_list_chars(level,weight)
-    if character == 0:
-        dimtbl = DimensionTable()
-    else:
-        dimtbl = DimensionTable(1)
-    if not dimtbl.is_in_db(level, weight, character):
-        emf_logger.debug("Data not available")
-        return render_template("not_available.html")
-    emf_logger.debug("Created dimension table in render_elliptic_modular_form_space")
     info = set_info_for_modular_form_space(**info)
     emf_logger.debug("keys={0}".format(info.keys()))
     if 'download' in kwds and 'error' not in kwds:
@@ -71,11 +61,13 @@ def render_elliptic_modular_form_space(level=None, weight=None, character=None, 
         emf_logger.debug("Dimension of newforms is one!")
         info['label'] = 'a'
         return redirect(url_for('emf.render_elliptic_modular_forms', **info))
-    info['title'] = "Newforms of weight %s on \(\Gamma_{0}(%s)\)" % (weight, level)
+    info['title'] = "Newforms of weight %s for \(\Gamma_{0}(%s)\) with character \(\chi_{%s}(%s, \cdot)\)" % (weight, level, level, character)
     bread = [(EMF_TOP, url_for('emf.render_elliptic_modular_forms'))]
     bread.append(("Level %s" % level, url_for('emf.render_elliptic_modular_forms', level=level)))
     bread.append(
         ("Weight %s" % weight, url_for('emf.render_elliptic_modular_forms', level=level, weight=weight)))
+    bread.append(
+        ("Character \(\chi_{%s}(%s, \cdot)\)" % (level, character), url_for('emf.render_elliptic_modular_forms', level=level, weight=weight, character=character)))
     # emf_logger.debug("friends={0}".format(friends))
     info['bread'] = bread
     return render_template("emf_space.html", **info)
@@ -83,139 +75,55 @@ def render_elliptic_modular_form_space(level=None, weight=None, character=None, 
 
 def set_info_for_modular_form_space(level=None, weight=None, character=None, label=None, **kwds):
     r"""
-    Set information about a space of modular forms.
+      Set information about a space of modular forms.
     """
     info = dict()
-    info['level'] = level
-    info['weight'] = weight
-    info['character'] = character
-    emf_logger.debug("info={0}".format(info))
-#    DB = connect_to_modularforms_db()
-#    if level <> None and weight <> None and character <> None:
-#        s = {'N':int(level),'k':int(weight),'chi':int(character)}
-#        if DB.Newform_factors.files.find(s).count()==0:
-#            
-    #    if(level > N_max_db or weight > k_max_db):
-#        info['error'] = "Currently not available"
-#    
+    emf_logger.debug("info={0}".format(info))    
     WMFS = None
     if level <= 0:
         info['error'] = "Got wrong level: %s " % level
         return info
     try:
-        WMFS = WebModFormSpace(N = level, k = weight, chi = character)
+        WMFS = WebModFormSpace(N = level, k = weight, chi = character, get_all_newforms_from_db = True, get_from_db = True)
+        emf_logger.debug("Created WebModFormSpace %s"%WMFS)
         if 'download' in info and 'tempfile' in info:
             WNF._save_to_file(info['tempfile'])
             info['filename'] = str(weight) + '-' + str(level) + '-' + str(character) + '-' + label + '.sobj'
             return info
-    except Exception as e:
+    except ValueError as e:
+        emf_logger.debug(e)
         if isinstance(e,IndexError):
             info['error'] = e.message
         WMFS = None
-    if WMFS == None:
+    if WMFS is None:
         info['error'] = "We are sorry. The sought space can not be found in the database."
         return info
-    if WMFS.level() == 1:
-        info['group'] = "\( \mathrm{SL}_{2}(\mathbb{Z})\)"
     else:
-        info['group'] = "\( \Gamma_{{0}}( {0} ) \)".format(WMFS.level())
-    if character == 0:
-        info['name_new'] = "\(S_{ %s }^{new}(%s) \)" % (WMFS.weight(), WMFS.level())
-        info['name_old'] = "\(S_{ %s }^{old}(%s) \)" % (WMFS.weight(), WMFS.level())
-    else:
-        conrey_char = WMFS.conrey_character()
-        conrey_char_name = WMFS.conrey_character_name()
-        info['conrey_character_name'] = '\( ' + conrey_char_name + '\)'
-        info['character_url'] = url_character(type='Dirichlet', modulus=WMFS.level(), number=conrey_char.number())
-        info['name_new'] = "\(S_{ %s }^{new}(%s,%s) \)" % (WMFS.weight(), WMFS.level(), conrey_char_name)
-        info['name_old'] = "\(S_{ %s }^{old}(%s,%s) \)" % (WMFS.weight(), WMFS.level(), conrey_char_name)
-    info['dimension_cusp_forms'] = WMFS.dimension_cusp_forms()
-    info['dimension_mod_forms'] = WMFS.dimension_modular_forms()
-    info['dimension_new_cusp_forms'] = WMFS.dimension_new_cusp_forms()
-    info['dimension_newspace'] = WMFS.dimension_newspace()
-    info['dimension_oldspace'] = WMFS.dimension_oldspace()
-    info['dimension'] = WMFS.dimension()
-    info['galois_orbits'] = WMFS.get_all_galois_orbit_info()
-    lifts = list()
-    if WMFS.dimension() == 0:  # we don't need to work with an empty space
-        info['sturm_bound'] = 0
-        info['new_decomposition'] = ''
-        info['is_empty'] = 1
-        lifts.append(('Half-Integral Weight Forms', '/ModularForm/Mp2/Q'))
-        lifts.append(('Siegel Modular Forms', '/ModularForm/GSp4/Q'))
-        info['lifts'] = lifts
-        return info
-    info['sturm_bound'] = WMFS.sturm_bound()
-    info['new_decomposition'] = WMFS.print_galois_orbits()
-    emf_logger.debug("new_decomp={0}".format(info['new_decomposition']))
-    info['nontrivial_new'] = len(info['new_decomposition'])
-    if info['new_decomposition']=='':
-        if info['dimension_newspace'] >0:
-            info['nontrivial_new_info'] = " is unfortunately not in the database yet!" 
-        else:
-            info['nontrivial_new_info'] = " is empty!"
+        info = WMFS.to_web_dict()
+
     ## we try to catch well-known bugs...
-    info['old_decomposition'] = "n/a"
-    if level < N_max_comp:
-        try:
-            O = WMFS.print_oldspace_decomposition()
-            info['old_decomposition'] = O
-        except:
-            emf_logger.critical("Error in computing oldspace decomposition")
-            O = []
-            info['old_decomposition'] = "n/a"
-            (A, B, C) = sys.exc_info()
-            # build an error message...
-            errtype = A.__name__
-            errmsg = B
-            s = "%s: %s  at:" % (errtype, errmsg)
-            next = C.tb_next
-            while(next):
-                ln = next.tb_lineno
-                filen = next.tb_frame.f_code.co_filename
-                s += "\n line no. %s in file %s" % (ln, filen)
-                next = next.tb_next
-                info['error_note'] = "Could not construct oldspace!\n" + s
+    info['old_decomposition'] = WMFS.oldspace_decomposition()
     # properties for the sidebar
-    prop = []
-    if WMFS._cuspidal == 1:
-        prop = [('Dimension newforms', [info['dimension_newspace']])]
-        prop.append(('Dimension oldforms', [info['dimension_oldspace']]))
-    else:
-        prop = [('Dimension modular forms', [info['dimension_mod_forms']])]
-        prop.append(('Dimension cusp forms', [info['dimension_cusp_forms']]))
-    prop.append(('Sturm bound', [WMFS.sturm_bound()]))
-    info['properties2'] = prop
     ## Make parent spaces of S_k(N,chi) for the sidebar
-    par_lbl = '\( S_{*} (\Gamma_0(' + str(level) + '),\cdot )\)'
-    par_url = '?level=' + str(level)
-    parents = [[par_lbl, par_url]]
-    par_lbl = '\( S_{k} (\Gamma_0(' + str(level) + '),\cdot )\)'
-    par_url = '?level=' + str(level) + '&weight=' + str(weight)
-    parents.append((par_lbl, par_url))
-    info['parents'] = parents
-    if 'character' in info:
-        info['character_order'] = WMFS.character_order()
-        info['character_conductor'] = WMFS.character_conductor()
-    friends = list()
+    # par_lbl = '\( S_{*} (\Gamma_0(' + str(level) + '),\cdot )\)'
+    # par_url = '?level=' + str(level)
+    # parents = [[par_lbl, par_url]]
+    # par_lbl = '\( S_{k} (\Gamma_0(' + str(level) + '),\cdot )\)'
+    # par_url = '?level=' + str(level) + '&weight=' + str(weight)
+    # parents.append((par_lbl, par_url))
+    # info['parents'] = parents
+    
     lifts = list()
-    if(('label' not in info) and info['old_decomposition'] != 'n/a'):
-        O = WMFS.oldspace_decomposition()
-        try:
-            for (old_level, chi, mult, d) in O:
-                if chi != 0:
-                    s = "\(S_{%s}(\Gamma_0(%s),\chi_{%s}) \) " % (weight, old_level, chi)
-                    friends.append((
-                        s, '?weight=' + str(weight) + '&level=' + str(old_level) + '&character=' + str(chi)))
-                else:
-                    s = "\(S_{%s}(\Gamma_0(%s)) \) " % (weight, old_level)
-                    friends.append(
-                        (s, '?weight=' + str(weight) + '&level=' + str(old_level) + '&character=' + str(0)))
-        except:
-            pass
-    info['friends'] = friends
     lifts.append(('Half-Integral Weight Forms', '/ModularForm/Mp2/Q'))
     lifts.append(('Siegel Modular Forms', '/ModularForm/GSp4/Q'))
     info['lifts'] = lifts
-    #emf_logger.debug("Info = {0}".format(info))
+
+    friends = list()
+    for f in WMFS.newforms().values():
+        friends.append(('Number field ' + f.coefficient_field_label(), f.coefficient_field_url()))
+    friends.append(('Number field ' + f.base_field_label(), f.base_field_url()))
+    friends = uniq(friends)
+    friends.append(("Dirichlet character \(" + WMFS.character().latex_name() + "\)", WMFS.character().url()))
+    info['friends'] = friends
+    
     return info
