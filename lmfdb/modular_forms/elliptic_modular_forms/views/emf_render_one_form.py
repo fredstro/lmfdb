@@ -48,8 +48,11 @@ def render_one_elliptic_modular_form(level, weight, character, label, **kwds):
         dimtbl = DimensionTable(1)
     emf_logger.debug("Created dimension table")
     if not dimtbl.is_in_db(level, weight, character):
-        emf_logger.debug("Data not available")
-        return render_template("not_available.html")
+        ## We now check explicitly
+        C = lmfdb.base.getDBConnection()
+        if C['modularforms2']['Newform_factors.files'].find().count()==0:
+            emf_logger.debug("Data not available")
+            return render_template("not_available.html")
     citation = ['Sage:' + version()]
     info = set_info_for_one_modular_form(level, weight,
                                          character, label, **kwds)
@@ -198,7 +201,9 @@ def set_info_for_one_modular_form(level=None, weight=None, character=None, label
         info['CM_values'] = WNF.cm_values(digits=digits)
         if len(info['CM_values']['tau'])==0:
             info.pop('CM_values')
-        if(WNF.is_CM()[0]):
+        if(WNF.is_CM()[0])==None:
+            s = '- Unknown (insufficient data)<br>'
+        elif(WNF.is_CM()[0]):
             s = '- Is a CM-form<br>'
         else:
             s = '- Is not a CM-form<br>'

@@ -130,7 +130,11 @@ class WebModFormSpace_class(object):
             '_conrey_character' : None,
             '_sage_character_no' : int(chi),
             '_conrey_character_no' : None,
+            '_conrey_character_name' : None,
+            '_character_order' : None,
+            '_character_conductor' : None,
             '_modular_symbols' : None,
+            '_sturm_bound' : None,
             '_newspace' : None,
             '_newforms' : {},
             '_new_modular_symbols' : None,
@@ -292,12 +296,17 @@ class WebModFormSpace_class(object):
             aplist[self.labels()[i]]={}
         for rec in ap_from_db:
             emf_logger.debug("rec={0}".format(rec))
-            a = self.labels()[rec['newform']]
+            ni = rec.get('newform')
+            if ni == None:
+                for a in self.labels():
+                    aplist[a][prec]=None
+                return aplist
+            a = self.labels()[ni]
             cur_prec = rec['prec']
             if aplist.get(a,{}).get(cur_prec,None)==None:
                 aplist[a][prec]=loads(fs.get(rec['_id']).read())
             if cur_prec > prec and prec>0: # We are happy with these coefficients.
-                return 
+                return aplist
         return aplist
 
     def aps(self,prec=-1):
@@ -347,95 +356,7 @@ class WebModFormSpace_class(object):
         data = self.to_dict()
         return(unpickle_wmfs_v1, (self._k, self._N, self._chi, self._cuspidal, self._prec, self._bitprec, data))
             
-
             
-    # def _get_objects(self, k, N, chi, use_db=True, get_what='Modular_symbols', **kwds):
-    #     r"""
-    #     Getting the space of modular symbols from the database if it exists. Otherwise compute it and insert it into the database.
-    #     """
-    #     if not get_what in ['ap', 'Modular_symbols','Newform_factors']:
-    #         emf_logger.critical("Collection {0} is not implemented!".format(get_what))
-    #     collection = get_what
-    #     emf_logger.debug("collection={0}".format(collection))
-    #     res = None
-    #     if 'prec' in kwds:
-    #         prec = kwds['prec']
-    #     elif get_what == 'ap':
-    #         prec = 10
-    #     self._from_db = 0
-    #     try:
-    #         if use_db:
-    #             emf_logger.debug("dbport={0}".format(dbport))
-    #             C = lmfdb.base.getDBConnection()
-    #             emf_logger.debug("C={0}".format(C))
-    #             if not C:
-    #                 emf_logger.critical("Could not connect to Database! C={0}".format(C))
-    #             if not db_name in C.database_names():
-    #                 emf_logger.critical("Incorrect database name {0}. \n Available databases are:{1}".format(
-    #                     db_name, C.database_names()))
-    #             if not collection + '.files' in C[db_name].collection_names():
-    #                 emf_logger.critical("Incorrect collection {0} in database {1}. \n Available collections are:{2}".format(collection, db_name, C[db_name].collection_names()))
-    #             files = C[db_name][collection].files
-    #             key = {'k': int(k), 'N': int(N), 'chi': int(chi)}
-    #             if get_what == 'ap':
-    #                 key['prec'] = {"$gt": prec - 1}
-    #             finds = files.find(key)
-    #             if get_what == 'ap':
-    #                 finds = finds.sort("prec")
-    #                 self._got_ap_from_db = True                    
-    #             if self._verbose > 1:
-    #                 emf_logger.debug("files={0}".format(files))
-    #                 emf_logger.debug("key={0}".format(key))
-    #                 emf_logger.debug("finds={0}".format(finds))
-    #                 emf_logger.debug("finds.count()={0}".format(finds.count()))
-    #             if get_what=='Newform_factors':
-    #                 finds = finds.sort("newform")
-    #                 res = []
-    #                 for rec in finds:
-    #                     fid = rec['_id']
-    #                     fs = gridfs.GridFS(C[db_name], collection)
-    #                     f = fs.get(fid)
-    #                     emf_logger.debug("rec={0}".format(rec))
-    #                     res.append(loads(f.read()))
-    #                     self._from_db = 1
-    #             elif finds and finds.count() > 0:
-    #                 rec = finds[0]
-    #                 emf_logger.debug("rec={0}".format(rec))
-    #                 fid = rec['_id']
-    #                 fs = gridfs.GridFS(C[db_name], collection)
-    #                 f = fs.get(fid)
-    #                 res = loads(f.read())
-    #                 # TODO avoid pickling python objects for storing in the database
-    #                 self._from_db = 1
-    #                 if get_what == 'Modular_symbls':
-    #                     self._id = rec['_id'] 
-    #             else:
-    #                 res = []
-    #     except ArithmeticError:
-    #         pass
-    #         #Exception as e:
-    #         #emf_logger.critical("Error: {0}".format(e))
-    #         # pass
-    #     if not res and not use_db:
-    #         if get_what == 'Modular_symbols':
-    #             if chi == 0:
-    #                 res = ModularSymbols(N, k, sign=1)
-    #             else:
-    #                 emf_logger.debug("character: {0}".format(self.character()))
-    #                 emf_logger.debug("weight: {0}".format(k))
-    #                 res = ModularSymbols(self.character(), k, sign=1)
-    #         elif get_what == 'ap':
-    #             if self.level() == 1:
-    #                 ## Get the Hecke eigenvalues for level 1.
-    #                 ## Have to do this manually due to bug in Sage:
-    #                 res = my_compact_newform_eigenvalues(
-    #                     self._modular_symbols.ambient(), prime_range(prec), names='x')
-    #             else:
-    #                 res = self._modular_symbols.ambient(
-    #                 ).compact_newform_eigenvalues(prime_range(prec), names='x')
-    #     emf_logger.debug("res={0}".format(res))
-    #     return res
-
     def __reduce__(self):
         r"""
         Used for pickling.
@@ -599,16 +520,24 @@ class WebModFormSpace_class(object):
         return self._conrey_character
 
     def conrey_character_number(self):
-        return self.conrey_character().number()
+        if not (self._conrey_character_no >0):
+          self._conrey_character_no = self.conrey_character().number()
+        return self._conrey_character_no
     
     def conrey_character_name(self):
-        return "\chi_{" + str(self._N) + "}(" + str(self.conrey_character().number()) + ",\cdot)"
+        if self._conrey_character_name == None:
+            self._conrey_character_name = "\chi_{" + str(self._N) + "}(" + str(self.conrey_character_number()) + ",\cdot)"
+        return self._conrey_character_name 
 
     def character_order(self):
-        return self.character().order()
-
+        if self._character_order == None:
+            self._character_order = self.character().order()
+        return self._character_order
+            
     def character_conductor(self):
-        return self.character().conductor()
+        if self._character_conductor == None:
+           self._character_conductor = self.character().conductor()
+        return self._character_conductor
 
     def group(self):
         return self._group
@@ -616,7 +545,9 @@ class WebModFormSpace_class(object):
     def sturm_bound(self):
         r""" Return the Sturm bound of S_k(N,xi), i.e. the number of coefficients necessary to determine a form uniquely in the space.
         """
-        return self._modular_symbols.sturm_bound()
+        if self._sturm_bound == None:
+            self._sturm_bound = self._modular_symbols.sturm_bound()
+        return self._sturm_bound
 
     def labels(self):
         r"""
@@ -1077,10 +1008,11 @@ class WebNewForm_class(object):
         """
         if self._parent == None:
             raise ValueError,"Need parent to check labels!"
-        if self._conrey_character_no>0:
+        if self._conrey_character_no>0 and self._conrey_character==None:
             self._conrey_character =  DirichletCharacter_conrey(DirichletGroup_conrey(self._N),self._conrey_character_no)
         else:
-            self._conrey_character = self._parent._conrey_character
+            self._conrey_character = self._parent.conrey_character()
+            self._conrey_character_no = self._parent.conrey_character_number()
         self._character = self.parent().character()
 
         if self._character == None or self._conrey_character==None:
@@ -1180,7 +1112,7 @@ class WebNewForm_class(object):
         for k in self.__dict__:
             data[k]=self.__dict__[k]
         ## Get rid of non-serializable objects.
-        for k in ['_f','_character','_base_ring','_coefficient_field']:
+        for k in ['_f','_character','_base_ring','_coefficient_field','_conrey_character']:
             data.pop(k,None)
         data['_parent']=self._parent.to_dict()
         return data
@@ -1386,7 +1318,10 @@ class WebNewForm_class(object):
         emf_logger.debug("has embeddings{0}:".format(nstart))
         deg = self.absolute_degree()
         for n in range(nstart,prec):
-            cn = self.coefficient(n)
+            try:
+                cn = self.coefficient(n)
+            except IndexError:
+                break
             if hasattr(cn, 'complex_embeddings'):
                 cn_emb = cn.complex_embeddings(bitprec)
             else:
@@ -1395,7 +1330,12 @@ class WebNewForm_class(object):
         nstart = len(self._embeddings_latex)
         emf_logger.debug("has embeddings_latex:{0}".format(nstart))            
         for n in range(nstart,prec):
-            cn_emb=self._embeddings[n]
+            try: 
+                cn_emb=self._embeddings[n]
+            except IndexError:
+                if self._embeddings==[]:
+                    break
+                continue
             cn_emb_latex = []
             for x in cn_emb:
                 t = my_complex_latex(x,display_bprec)
@@ -1486,6 +1426,8 @@ class WebNewForm_class(object):
         prod = None
         if self._ap == None or self._ap == {}:
             self._update_aps()
+            if self._ap == {}:
+               raise IndexError,"Have no coefficients!"
         ev = self._ap
         K = self._ap[2].parent()
         for p, r in F:
@@ -1929,7 +1871,10 @@ class WebNewForm_class(object):
             return self._is_CM
         max_nump = self._number_of_hecke_eigenvalues_to_check()
         # E,v = self._f.compact_system_of_eigenvalues(max_nump+1)
-        coeffs = self.coefficients(range(max_nump + 1),insert_in_db=insert_in_db)
+        try:
+            coeffs = self.coefficients(range(max_nump + 1),insert_in_db=insert_in_db)
+        except IndexError: 
+           return None,None
         nz = coeffs.count(0)  # number of zero coefficients
         nnz = len(coeffs) - nz  # number of non-zero coefficients
         if(nz == 0):
@@ -2254,7 +2199,10 @@ class WebNewForm_class(object):
             thetas[j] = dict()
         for j in xrange(len(ps)):
             p = ps[j]
-            ap = self.coefficient(p) #_ap[p]
+            try:
+                ap = self.coefficient(p) 
+            except IndexError:
+                break
             # Remove bad primes
             if p.divides(self.level()):
                 continue
