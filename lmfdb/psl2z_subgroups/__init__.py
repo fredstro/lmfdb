@@ -1,3 +1,4 @@
+import os
 import lmfdb.utils as utils
 import flask
 from flask import Flask
@@ -15,9 +16,14 @@ psg_logger = utils.make_logger(psg)
 
 #filen = inspect.getabsfile(inspect.currentframe())
 #datadir = "/".join(os.path.dirname(filen).rsplit("/")[0:-1]+["data"])
-datadir = "/home/pmzfs/Devel/noncongruence/data/"
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///{0}/groups3.sqlite'.format(datadir)
+#datadir = "/home/pmzfs/Devel/noncongruence/data/"
+basedir = os.path.abspath(os.path.dirname(__file__))
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'groups3.sqlite')
+#print "URI=",SQLALCHEMY_DATABASE_URI 
+#SQLALCHEMY_MIGRATE_REPO = os.path.join(basedir, 'db_repository')
+
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///{0}/groups3.sqlite'.format(datadir)
 db = SQLAlchemy(app)
 
 import views

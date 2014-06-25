@@ -42,18 +42,28 @@ There does not exist any subgroups with the given signature specification: {{ in
   <tr>
     <th>Signature</th>
     <th>No. conjugacy classes </th>
-    <th>Representative </th>
-    <th>(Standard name if existing)</th>
-    <th>Number of conjugates </th>
-    <th>Is symmetric </th>
-    <th>Is congruence </th>
-    <th>Cusps</th>
+    {% if info.show_classes %}
+      <th>Representative </th>
+      <th>(Standard name if existing)</th>
+      <th>Number of conjugates </th>
+      <th>Is symmetric </th>
+      <th>Is congruence </th>
+      <th>Cusps</th>
+    {%else %}
+      <td></td>
+      <td></td>    <td></td>    <td></td>    <td></td>    <td></td>
+    {%endif%}
   </tr>
 {% for N in info.indices %}
   <tr><th>{{ N }} </th><td></td><td></td> </tr>
-  {% for s in info.signatures %}
-  <tr><td>{{ s }} </td><td> {{ s.conjugacy_classes_mod_psl | length }}</td><td></td> </tr>
-     
+  {% for s in info.signatures.filter_by(psl2z_index=N) %}
+  <tr><td>{{ s }} </td><td> {{ s.conjugacy_classes_mod_psl | length }}</td>
+    <td>
+     {% if not info.show_classes %}
+     <a href="{{url_for('psl2zsubg.browse_subgroups')+'{0}/{1}/{2}/{3}/{4}'.format(N,s.nu,s.e2,s.e3,s.genus)}}/?show_classes=True">Show conjugacy classes</a>
+     {% endif %}
+    </td> </tr>
+    {% if info.show_classes %}
      {% for cc in s.conjugacy_classes_mod_psl %}
      <tr>
        <td></td><td></td>
@@ -76,6 +86,7 @@ There does not exist any subgroups with the given signature specification: {{ in
       </td>
      </tr>
     {% endfor %} 
+   {% endif %}
 {% endfor %} 
 {% endfor %} 
 

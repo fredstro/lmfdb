@@ -63,20 +63,28 @@ def browse_subgroups(**kwds):
     psg_logger.debug("args={0}".format(request.form))
     psg_logger.debug("met={0}".format(request.method))
     #psg_logger.debug("index=".format(index))   
-    
     title = "Browse Subgroups"
     bread = [(PSG_TOP, url_for('psl2zsubg.browse_subgroups'))]
     #results = PSL2Zsubgroup.query.filter_by(psl2z_index=int(index))
     info = {}
     info['data'] = {'signature':signature}
     info['signatures'] = build_signature_query(signature)
-    info['indices'] = [x.psl2z_index for x in info['signatures']]
-    info['show_classes']=False
-    #print "signatures=",info['signatures'].all()
-    #print "count=",info['signatures'].count()
+    #print "signatures=",info['signatures'] 
+    info['indices'] = list(set([x.psl2z_index for x in info['signatures']]))
+    info['nus'] = list(set([x.nu for x in info['signatures']]))
+    info['show_classes']=kwds.get('show_classes',request.args.get('show_classes',request.form.get('show_classes',False)))
+    print "info=",info
+    print "args.show_classes=",request.args.get('show_classes',None)
+    print "forms.show_classes=",request.form.get('show_classes')
+    print "signatures=",info['signatures'].all()
+    print "count=",info['signatures'].count()
     if info['signatures'].count()==0:
         ## Let's check if the signature is at all consistent.
         info['is_consistent'] = is_consistent_signature(signature)
+    if len(info['indices'])==1:
+        bread.append(('Index '+str(info['indices'][0]),url_for('psl2zsubg.browse_subgroups',index=info['indices'][0])))
+        if len(info['nus'])==1:
+            bread.append(('Num cusps '+str(info['nus'][0]),url_for('psl2zsubg.browse_subgroups',index=info['indices'][0],nu=info['nus'][0])))
     #Signature_class.query.filter_by(psl2z_index=int(index))
     #for r in results:
     #    info['data'].append(r)
@@ -126,3 +134,15 @@ def render_plot(**kwds):
     response = make_response(data)
     response.headers['Content-type'] = 'image/png'
     return response
+
+@psg.route("/Tables/",methods=met)
+def render_browse_table(**kwds):
+    info['colhheads']=['Index',
+                       'Signature',
+                       'No. cc.',
+                       'Repr',
+                       'Symmetry',
+                       'Congruence'
+                       ]
+return render_template("mwf_browse_all_eigenvalues.html", **info)
+    
