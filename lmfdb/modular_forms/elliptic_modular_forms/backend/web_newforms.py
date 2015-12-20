@@ -440,9 +440,12 @@ class WebNewForm(WebObject, CachedRepresentation):
             self._coefficients[2]=ev[2]
             K = ev[2].parent()
         prod = K(1)
-        #emf_logger.debug("K= {0}".format(K))        
+        emf_logger.debug("K= {0}".format(K))
         F = arith.factor(n)
         for p, r in F:
+            emf_logger.debug("parent_char_val[{0}]={1}".format(p,self.parent.character_used_in_computation.value(p)))
+            emf_logger.debug("char_val[{0}]={1}".format(p,self.character.value(p)))
+
             (p, r) = (int(p), int(r))
             pr = p**r
             cp = self._coefficients.get(p)
