@@ -320,7 +320,7 @@ class WebObject(object):
             emf_logger.debug('Update requested')
             try:
                 self.update_from_db()
-            except Exception as e:
+            except ValiueError as e: #Exception as e:
                 raise RuntimeError(str(e))
         #emf_logger.debug('init_dynamic_properties will be called for {0}'.format(self.__dict__))
         if init_dynamic_properties:
@@ -512,7 +512,7 @@ class WebObject(object):
                 return True
             else:
                 fid = coll.find_one(file_key, projection=['_id'])['_id']
-                fs.delete(fid)
+                fs.delete(fid,{})
                 emf_logger.debug("Deleted file with fid={0}".format(fid))
         # insert
         s = dumps(self.fs_dict())
