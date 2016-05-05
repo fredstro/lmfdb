@@ -48,7 +48,7 @@ def makeDBConnection(port, **kwargs):
         import pymongo
         logging.info("using pymongo version %s" % pymongo.version)
         logging.error("replicaset %s" %  kwargs.get("replicaset"))
-        if pymongo.version_tuple[0] >= 3 or kwargs.get("replicaset") == '':
+        if pymongo.version_tuple[0] >= 3 or kwargs.get("replicaset") == '' or kwargs.get('replicaset') is None:
             from pymongo import MongoClient
             _C = MongoClient(port = port,  **kwargs)
         else:
