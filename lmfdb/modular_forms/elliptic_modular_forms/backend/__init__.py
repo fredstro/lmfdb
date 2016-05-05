@@ -1,5 +1,5 @@
 from plot_dom import *
-
+from .. import emf_logger
 db_name = 'modularforms2'
 
 import lmfdb
