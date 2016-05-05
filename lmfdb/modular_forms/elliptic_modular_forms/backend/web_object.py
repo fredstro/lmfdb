@@ -651,6 +651,7 @@ class WebObject(object):
                 except ValueError as e:
                     raise ValueError("Wrong format in database! : {0} coll: {1} rec:{2}".format(e,coll,r))
                 except CorruptGridFile:
+                    self.authorize()
                     fs.delete(fid)
                     emf_logger.error("Found corrupt file! Deleting!")
                     d = {}
