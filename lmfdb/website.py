@@ -365,7 +365,7 @@ if True:
 
     if not configuration:
         configuration = get_configuration()
-    logging.info("configuration: %s" % configuration)
+    logging.error("configuration: %s" % configuration)
     _init(**configuration['mongo_client_options'])
     app.logger.addHandler(file_handler)
 
