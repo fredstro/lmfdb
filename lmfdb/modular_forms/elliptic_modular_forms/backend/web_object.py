@@ -36,7 +36,7 @@ import pymongo
 import gridfs
 import re
 import datetime
-
+from gridfs.errors import CorruptGridFile
 class WebProperty(object):
     r"""
     A base class for the data types for the properties of a WebObject.
@@ -650,7 +650,10 @@ class WebObject(object):
                     d = loads(fs.get(fid).read())
                 except ValueError as e:
                     raise ValueError("Wrong format in database! : {0} coll: {1} rec:{2}".format(e,coll,r))
-                #emf_logger.debug("type(d)={0}".format(type(d)))                                
+                except CorruptGridFile:
+                    fs.delete(fid)
+                    emf_logger.error("Found corrupt file! Deleting!")
+                    d = {}
                 #emf_logger.debug("d.keys()={0}".format(d.keys()))                
                 for p in self._fs_properties:
                     #emf_logger.debug("p={0}, update:{1}".format(p,p.include_in_update))
