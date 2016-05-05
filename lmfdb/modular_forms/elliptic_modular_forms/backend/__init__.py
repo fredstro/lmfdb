@@ -11,6 +11,7 @@ def connect_to_modularforms_db(collection='',create=True):
     """
     try:
         C = lmfdb.base.getDBConnection()
+        C.write_concern = {'w':"majority",'wtimeout':int(10000)}
     except Exception as e:
         emf_logger.critical("Could not connect to Database! db={0}. Error: {1}".format(db_name,e.message))
     if db_name not in C.database_names() and not create:
