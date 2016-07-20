@@ -20,7 +20,7 @@ class EmfTest(LmfdbTest):
         assert '"/ModularForm/GL2/Q/holomorphic/24/?group=0">24' in page.data
         assert '"/ModularForm/GL2/Q/holomorphic/23/12/1/?group=0">19' in page.data
 
-    @unittest2.skip("Long tests for many newform spaces, should be run & pass before any release")
+    #@unittest2.skip("Long tests for many newform spaces, should be run & pass before any release")
     def test_many(self):
         levels = range(1,41)
         weights = range(2,22,2)
