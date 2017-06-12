@@ -24,6 +24,7 @@ AUTHORS:
 """
 from flask import url_for
 from copy import copy
+from os.path import dirname, join
 from lmfdb.modular_forms.elliptic_modular_forms import emf_logger
 from lmfdb.modular_forms.elliptic_modular_forms.backend import connect_to_modularforms_db
 from lmfdb.WebNumberField import field_pretty
@@ -560,7 +561,6 @@ class WebObject(object):
         r"""
         Need to be authorized to insert data
         """
-        from os.path import dirname, join
         pw_filename = join(dirname(dirname(__file__)), "password")
         user = 'editor'
         password = open(pw_filename, "r").readlines()[0].strip()
@@ -599,6 +599,14 @@ class WebObject(object):
         fs = self._files
         try: 
             self.authorize()
+            ## We also need to authorize separately for the gridfs
+            ## Since this database instance is cached.
+            pw_filename = join(dirname(dirname(__file__)), "password")
+            user = 'editor'
+            password = open(pw_filename, "r").readlines()[0].strip()
+            c =fs._GridFS__database
+            c.authenticate(user,password)
+                    
         except OperationFailure:
             emf_logger.critical("Authentication failed. You are not authorized to save data to the database!")
             return False
