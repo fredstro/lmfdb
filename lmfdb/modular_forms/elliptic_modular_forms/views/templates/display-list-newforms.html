@@ -49,11 +49,15 @@ info in this page is set by set_info_for_web_newform in emf_render_web_newform.p
 {% set qexp = {'visible': false, 'hidden': false} %}
     
     {% for label in orbits %}
-       {% set f = orbits2[label] %}
-         {# determine if the ciefficient field is cyclotomic #}
+        {% set f = orbits2[label] %}
+         {% if cm == 1 and not f.is_cm %}
+            {% continue %}
+         {% else %}
+         {# determine if the coefficient field is cyclotomic #}
          {% if vars.update({'cyclotomicorder': 0}) %} {% endif %}
          {% if f.coefficient_field.variable_name().startswith("zeta") %}
              {% if vars.update({'cyclotomicorder': f.coefficient_field.variable_name()[4:]}) %} {% endif %}
+         {% endif %}
          {% endif %}
        <tr>
      {% if not f.has_updated_from_db() %}
@@ -127,19 +131,22 @@ Click on the label in the table above for more information about each newform.</
   <tbody>
     {% for label in orbits %}
     {% set f = orbits2[label] %}
-            {% if f.has_updated_from_db() and f.base_ring != f.coefficient_field and f.coefficient_field.lmfdb_label != '1.1.1.1' %}
+        {% if cm==1 and f.is_cm == 0 %}
+        {% continue %}
+        {% endif %}
+        {% if f.has_updated_from_db() and f.base_ring != f.coefficient_field and f.coefficient_field.lmfdb_label != '1.1.1.1' %}
     <tr>
         {% if f.coefficient_field.lmfdb_label %}
         <td align="left" valign="top">$\Q(\alpha_{ {{loop.index}} })\cong$ 
 <a title = "{{ f.coefficient_field.lmfdb_pretty }}[nf.field.data]" knowl= "nf.field.data" kwargs="label={{ f.coefficient_field.lmfdb_label }}">{{ f.coefficient_field.lmfdb_pretty }}</a></td>
-<td align="left">
-{{ f.coefficient_field.relative_polynomial_latex('x') }}
-</td>
+        <td align="left">
+            {{ f.coefficient_field.relative_polynomial_latex('x') }}
+        </td>
         {% else %}
         <td align="left"  valign="top">$\Q(\alpha_{ {{loop.index}} })$</td>
-    <td align="left"  valign="top">
-      {{ f.coefficient_field.relative_polynomial_latex('x') }}
-    </td>
+        <td align="left"  valign="top">
+            {{ f.coefficient_field.relative_polynomial_latex('x') }}
+        </td>
         {% endif %}
       </tr>
         {% endif %}

@@ -100,7 +100,7 @@ def render_elliptic_modular_forms(level=None, weight=None, character=None, label
     emf_logger.debug("args={0}".format(request.args))
     emf_logger.debug("args={0}".format(request.form))
     emf_logger.debug("met={0}".format(request.method))
-    keys = ['download', 'jump_to']
+    keys = ['download', 'jump_to','cm']
     info = get_args(request, level, weight, character, group, label, keys=keys)
     valid = validate_parameters(level,weight,character,label,info)
     if isinstance(valid,basestring):

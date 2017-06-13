@@ -35,6 +35,7 @@ def render_web_modform_space(level=None, weight=None, character=None, label=None
     emf_logger.debug("In render_elliptic_modular_form_space kwds: {0}".format(kwds))
     emf_logger.debug(
         "Input: level={0},weight={1},character={2},label={3}".format(level, weight, character, label))
+    print "kwds=",kwds
     info = to_dict(kwds)
     info['level'] = level
     info['weight'] = weight
@@ -59,6 +60,8 @@ def render_web_modform_space(level=None, weight=None, character=None, label=None
         info['title'] = "Newforms of weight %s for \(\Gamma_{0}(%s)\) with character \(\chi_{%s}(%s, \cdot)\)" % (weight, level, level, character)
     else:
         info['title'] = "Newforms of weight %s for \(\Gamma_{0}(%s)\)" % (weight, level)
+    if info.get('cm')==1:
+        info['title'] += ' with complex multiplication'
     bread = [(MF_TOP, url_for('mf.modular_form_main_page')), (EMF_TOP, url_for('emf.render_elliptic_modular_forms'))]
     bread.append(("Level %s" % level, url_for('emf.render_elliptic_modular_forms', level=level)))
     bread.append(
@@ -126,43 +129,50 @@ def set_info_for_modular_form_space(level=None, weight=None, character=None, lab
         info['space'] = WMFS
         info['max_height'] = default_max_height
 #    info['old_decomposition'] = WMFS.oldspace_decomposition()
-    info['oldspace_decomposition']=''
-    try: 
-        emf_logger.debug("Oldspace = {0}".format(WMFS.oldspace_decomposition))
-        if WMFS.oldspace_decomposition != []:
-            emf_logger.debug("oldspace={0}".format(WMFS.oldspace_decomposition))
-            l = []
-            for t in WMFS.oldspace_decomposition:
-                emf_logger.debug("t={0}".format(t))
-                N,k,chi,mult,d = t
-                url = url_for('emf.render_elliptic_modular_forms', level=N, weight=k, character=chi)
-                if chi != 1:
-                    sname = "S^{{ new }}_{{ {k} }}(\\Gamma_0({N}),\\chi_{{ {N} }}({chi},\\cdot))".format(k=k,N=N,chi=chi)
-                else:
-                    sname = "S^{{ new }}_{{ {k} }}(\\Gamma_0({N}))".format(k=k,N=N)
-                l.append("\href{{ {url} }}{{ {sname} }}^{{\oplus {mult} }}".format(sname=sname,mult=mult,url=url))
-            if l != []:            
-                s = "\\oplus ".join(l)
-                info['oldspace_decomposition']=' $ {0} $'.format(s)
-    except Exception as e:
-        emf_logger.critical("Oldspace decomposition failed. Error:{0}".format(e))
+    if kwds.get('cm')=='1':
+        info['cm']=1
+    else: ## We don't need the oldspace decomposition if we want to show only CM forms
+        info['oldspace_decomposition']=''
+        try: 
+            emf_logger.debug("Oldspace = {0}".format(WMFS.oldspace_decomposition))
+            if WMFS.oldspace_decomposition != []:
+                emf_logger.debug("oldspace={0}".format(WMFS.oldspace_decomposition))
+                l = []
+                for t in WMFS.oldspace_decomposition:
+                    emf_logger.debug("t={0}".format(t))
+                    N,k,chi,mult,d = t
+                    url = url_for('emf.render_elliptic_modular_forms', level=N, weight=k, character=chi)
+                    if chi != 1:
+                        sname = "S^{{ new }}_{{ {k} }}(\\Gamma_0({N}),\\chi_{{ {N} }}({chi},\\cdot))".format(k=k,N=N,chi=chi)
+                    else:
+                        sname = "S^{{ new }}_{{ {k} }}(\\Gamma_0({N}))".format(k=k,N=N)
+                    l.append("\href{{ {url} }}{{ {sname} }}^{{\oplus {mult} }}".format(sname=sname,mult=mult,url=url))
+                if l != []:            
+                    s = "\\oplus ".join(l)
+                    info['oldspace_decomposition']=' $ {0} $'.format(s)
+        except Exception as e:
+            emf_logger.critical("Oldspace decomposition failed. Error:{0}".format(e))
     ## For side-bar
     lifts = list()
     lifts.append(('Half-Integral Weight Forms', '/ModularForm/Mp2/Q'))
     lifts.append(('Siegel Modular Forms', '/ModularForm/GSp4/Q'))
     info['lifts'] = lifts
-    friends = list()
+    friends = list()    
+    info['onlyrat'] = True
     for label in WMFS.hecke_orbits:
         f = WMFS.hecke_orbits[label]
+        if info.get('cm')==1 and not f.is_cm:
+            continue
         # catch the url being None or set to '':
         if hasattr(f.base_ring, "lmfdb_url") and f.base_ring.lmfdb_url:
             friends.append(('Number field ' + f.base_ring.lmfdb_pretty, f.base_ring.lmfdb_url))
         if hasattr(f.coefficient_field, "lmfdb_url") and f.coefficient_field.lmfdb_url:
             friends.append(('Number field ' + f.coefficient_field.lmfdb_pretty, f.coefficient_field.lmfdb_url))
+        if not f.is_rational:
+           info['onlyrat'] = False 
     friends.append(("Dirichlet character \(" + WMFS.character.latex_name + "\)", WMFS.character.url()))
     friends = uniq(friends)
     info['friends'] = friends
     info['code'] = WMFS.code
-    
     return info
 

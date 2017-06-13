@@ -146,6 +146,9 @@ The table below gives the dimensions of the space of holomorphic
 {% else %}
 , with trivial {{KNOWL('character.dirichlet', title='character')}}.
 {% endif %}
+{% if info.cm %}
+The table is filtered to only show the number of newforms with {{KNOWL('mf.complex_multiplication', title='complex multiplication')}}.
+{% endif %}
 </div>
  {% set has_na = [] %}
       <table class="ntdata">
@@ -181,11 +184,11 @@ The table below gives the dimensions of the space of holomorphic
                   {% if in_db == 1 %}
                      {% if info.grouptype == 0 %}
                        {% set url =
-                       url_for('emf.render_elliptic_modular_forms',level=N,weight=k,character=1,group=0)
+                       url_for('emf.render_elliptic_modular_forms',level=N,weight=k,character=1,group=0,cm=info.cm)
                        %}
                     {% else %}
                        {% set url =
-                       url_for('emf.render_elliptic_modular_forms',level=N,weight=k,group=1)
+                       url_for('emf.render_elliptic_modular_forms',level=N,weight=k,group=1,cm=info.cm)
                          %}
                     {% endif %}
                  <a href="{{url}}">{{dim}}</a>

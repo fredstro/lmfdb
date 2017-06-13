@@ -33,3 +33,13 @@
     </table>
       <button type="submit" name="" value="">Make new table</button>
   </form>
+
+<p>
+{% if info.grouptype == 0 %}
+{% if info.cm %}
+    <a href="{{url_for('.browse_web_modform_spaces_in_ranges',level=level_range,weight=weight_range,group=info.grouptype)}}">Show all newforms.</a>  
+{% else %}
+    <a href="{{url_for('.browse_web_modform_spaces_in_ranges',level=level_range,weight=weight_range,group=info.grouptype,cm=1)}}">Show only {{KNOWL('mf.complex_multiplication', title='CM forms')}}.</a>  
+{% endif %}
+{% endif %}
+</p>

@@ -26,6 +26,7 @@ def render_elliptic_modular_form_navigation_wp(**args):
     emf_logger.debug("render_c_m_f_n_wp info={0}".format(info))
     level = my_get(info, 'level', None, int)
     weight = my_get(info, 'weight', None, int)
+    cm = my_get(info,'cm',None,int)
     # character = my_get(info, 'character', 1, int) # not used
     # label = info.get('label', '') # not used
     if('plot' in info and isinstance(level,int) and level > 0):
@@ -111,7 +112,10 @@ def render_elliptic_modular_form_navigation_wp(**args):
         k = r['weight']
         if group != 0 or k%2==0:
             #emf_logger.debug("Found:k={0},N={1}".format(k,N))
-            dim = r['d_newf'] # dimension of newforms
+            if cm == 1: 
+                dim = r.get('d_cm','n/a')
+            else:
+                dim = r['d_newf'] # dimension of newforms
             info['table'][N][k]['dim_new'] = dim
             if group == 0:
                 indb = r['in_wdb'] # 1 if it is in the webmodforms db else 0

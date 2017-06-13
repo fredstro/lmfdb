@@ -17,7 +17,7 @@ def my_get(dict, key, default, f=None):
     and before returning we apply f on the result.
     """
     x = dict.get(key, default)
-    if x == '':
+    if x == '' or x is None:
         x = default
     if f is not None:
         try:
